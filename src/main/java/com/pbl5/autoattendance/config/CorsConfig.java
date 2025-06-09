@@ -19,7 +19,7 @@ public class CorsConfig {
                                 "http://192.168.60.15:5173",
                                 "http://192.168.180.164:5173"
                         )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedMethods("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }

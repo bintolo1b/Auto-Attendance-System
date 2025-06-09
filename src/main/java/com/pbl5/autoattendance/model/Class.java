@@ -26,6 +26,9 @@ public class Class {
     @Column(name = "number_of_weeks")
     private Integer numberOfWeeks;
 
+    @Column(name = "hide_to_teacher", nullable = false)
+    private boolean hideToTeacher = false;
+
     @OneToMany(mappedBy = "aClass")
     private List<StudentClass> studentClasses;
 

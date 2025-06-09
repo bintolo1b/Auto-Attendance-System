@@ -35,7 +35,7 @@ public class AttendanceCheckAPI {
     LessonService lessonService;
 
 
-    @PostMapping("/check")
+    @PostMapping("/check")  
     public ResponseEntity<AttendanceCheckDTO> checkAttendance(@RequestBody Map<String, Object> request) {
         Integer lessonId = (Integer) request.get("lessonId");
         Integer studentId = (Integer) request.get("studentId");
@@ -81,6 +81,9 @@ public class AttendanceCheckAPI {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         
+        // Cập nhật trạng thái điểm danh cho các buổi học đã kết thúc
+        attendanceCheckService.updateExpiredAttendanceChecks();
+        
         AttendanceCheckId id = new AttendanceCheckId();
         id.setLessonId(lessonId);
         id.setStudentId(studentId);
@@ -97,7 +100,7 @@ public class AttendanceCheckAPI {
 
     @GetMapping("/result/{lessionId}")
     public ApiResponse<AttendanceCheckDTO> checkAttendent(@PathVariable int lessionId ){
-        System.out.println("checkAttendent");
+        System.out.println("checkAttendent  code 1000");
         AttendanceCheckDTO result = attendanceCheckService.getAttendanceCheckByLessionid(lessionId);
         return ApiResponse.<AttendanceCheckDTO>builder()
                 .code(1000)
@@ -118,20 +121,24 @@ public class AttendanceCheckAPI {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-
         attendanceCheck.setStatus(attendanceCheckDTO.getStatus());
-        attendanceCheck.setImgPath(attendanceCheckDTO.getImgPath());
+        if (attendanceCheckDTO.getStatus().equals("Absent")){
+            attendanceCheck.setImgPath("");
+            attendanceCheck.setCheckinDate(null);
+        }
+        else{
+            if (!attendanceCheckDTO.getImgPath().equals(""))
+                attendanceCheck.setImgPath(attendanceCheckDTO.getImgPath());
+            LocalDateTime checkinDate = attendanceCheckDTO.getCheckinDate();
 
-        attendanceCheck.setCheckinDate(attendanceCheckDTO.getCheckinDate());
-        LocalDateTime checkinDate = attendanceCheckDTO.getCheckinDate();
+            // Chuyển LocalDateTime thành ZonedDateTime (giả sử checkinDate là UTC)
+            ZonedDateTime utcZonedDateTime = checkinDate.atZone(ZoneId.of("UTC"));
 
-        // Chuyển LocalDateTime thành ZonedDateTime (giả sử checkinDate là UTC)
-        ZonedDateTime utcZonedDateTime = checkinDate.atZone(ZoneId.of("UTC"));
+            // Chuyển từ UTC sang giờ Việt Nam (UTC+7)
+            ZonedDateTime vietnamZonedDateTime = utcZonedDateTime.withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"));
 
-        // Chuyển từ UTC sang giờ Việt Nam (UTC+7)
-        ZonedDateTime vietnamZonedDateTime = utcZonedDateTime.withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"));
-
-        attendanceCheck.setCheckinDate(vietnamZonedDateTime.toLocalDateTime());
+            attendanceCheck.setCheckinDate(vietnamZonedDateTime.toLocalDateTime());
+        }
 
         attendanceCheckService.update(attendanceCheck);
         return new ResponseEntity<>(HttpStatus.OK);

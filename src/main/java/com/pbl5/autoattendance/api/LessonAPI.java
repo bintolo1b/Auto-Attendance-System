@@ -7,6 +7,7 @@ import com.pbl5.autoattendance.service.LessonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -25,7 +27,7 @@ public class LessonAPI {
 
     @GetMapping("/class/{classId}")
     public ResponseEntity<List<LessonDTO>> getLessonsByClassId(@PathVariable Integer classId) {
-        List<Lesson> lessons = lessonService.getLessonsByClassIdBeforeDate(classId);
+        List<Lesson> lessons = lessonService.getLessonsByClassId(classId);
         List<LessonDTO> lessonDTODTOS = lessons.stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -57,6 +59,29 @@ public class LessonAPI {
         return ResponseEntity.ok(scheduleDTOS);
     }
     
+    @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> createLesson(@RequestBody LessonDTO lessonDTO) {
+        System.out.println("cr");
+        Map<String, Object> result = lessonService.createSingleLesson(lessonDTO);
+        if ((Boolean) result.get("success")) {
+            return ResponseEntity.ok(convertToDTO((Lesson) result.get("data")));
+        } else {
+            return ResponseEntity.badRequest().body(result);
+        }
+    }
+
+    @DeleteMapping("/{lessonId}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> deleteLesson(@PathVariable Integer lessonId) {
+        try {
+            lessonService.deleteLesson(lessonId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     private LessonDTO convertToDTO(Lesson lesson) {
         LessonDTO dto = new LessonDTO();
         dto.setId(lesson.getId());

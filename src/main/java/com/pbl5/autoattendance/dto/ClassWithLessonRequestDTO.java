@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Getter
 @Setter
-public class ClassWithLessonDTO {
+public class ClassWithLessonRequestDTO {
     @NotNull(message = "Tên lớp không được để trống")
     @NotBlank(message = "Tên lớp không được để trống")
     String name;
